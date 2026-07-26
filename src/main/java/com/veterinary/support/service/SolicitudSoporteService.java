@@ -1,6 +1,10 @@
 package com.veterinary.support.service;
 
+import com.veterinary.support.dto.PageResponse;
 import com.veterinary.support.dto.SolicitudSoporteRequestDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.veterinary.support.dto.SolicitudSoporteResponseDTO;
 import com.veterinary.support.exception.SolicitudSoporteNotFoundException;
 import com.veterinary.support.model.SolicitudSoporte;
@@ -26,6 +30,24 @@ public class SolicitudSoporteService {
         return repository.findAll().stream()
                 .map(SolicitudSoporteResponseDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponse<SolicitudSoporte> listarSolicitudesPaginadas(int numeroPagina, int tamañoPagina) {
+        // 1. Creamos la regla de paginación
+        Pageable pageable = PageRequest.of(numeroPagina, tamañoPagina);
+        
+        // 2. JPA hace la consulta a MySQL con límite de datos automáticamente
+        Page<SolicitudSoporte> pagina = repository.findAll(pageable);
+        
+        // 3. Empaquetamos el resultado en nuestro DTO como enseñó el profesor
+        return new PageResponse<>(
+                pagina.getContent(),
+                pagina.getNumber(),
+                pagina.getSize(),
+                pagina.getTotalElements(),
+                pagina.getTotalPages(),
+                pagina.isLast()
+        );
     }
 
     public SolicitudSoporteResponseDTO obtenerPorId(Long id) {

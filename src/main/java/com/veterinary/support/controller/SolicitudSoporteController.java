@@ -1,7 +1,10 @@
 package com.veterinary.support.controller;
 
+import com.veterinary.support.dto.PageResponse;
+import com.veterinary.support.dto.ResponseDTO;
 import com.veterinary.support.dto.SolicitudSoporteRequestDTO;
 import com.veterinary.support.dto.SolicitudSoporteResponseDTO;
+import com.veterinary.support.model.SolicitudSoporte;
 import com.veterinary.support.model.SolicitudSoporte.EstadoSolicitud;
 import com.veterinary.support.service.SolicitudSoporteService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,9 +30,22 @@ public class SolicitudSoporteController {
     private final SolicitudSoporteService service;
 
     @GetMapping
-    @Operation(summary = "Obtener todas las solicitudes", description = "Retorna el listado completo de solicitudes de soporte")
-    public ResponseEntity<List<SolicitudSoporteResponseDTO>> getAll() {
-        return ResponseEntity.ok(service.obtenerTodas());
+    @Operation(summary = "Obtener todas las solicitudes de forma paginada", description = "Retorna el listado paginado de solicitudes de soporte")
+    public ResponseEntity<ResponseDTO<PageResponse<SolicitudSoporte>>> listarSolicitudes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        // Obtenemos los datos paginados desde el servicio
+        PageResponse<SolicitudSoporte> dataPaginada = service.listarSolicitudesPaginadas(page, size);
+        
+        // Armamos la respuesta estandarizada exigida (response code + response message + data)
+        ResponseDTO<PageResponse<SolicitudSoporte>> response = new ResponseDTO<>(
+                200, 
+                "Solicitudes recuperadas exitosamente", 
+                dataPaginada
+        );
+        
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
@@ -55,12 +72,12 @@ public class SolicitudSoporteController {
         return ResponseEntity.ok(service.actualizar(id, dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')") // ¡Esta es la magia! Solo el rol ADMIN entra aquí
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar solicitud")
-    @ApiResponse(responseCode = "204", description = "Solicitud eliminada")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<ResponseDTO<Void>> eliminarSolicitud(@PathVariable Long id) {
         service.eliminar(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new ResponseDTO<>(200, "Solicitud eliminada correctamente"));
     }
 
     @PatchMapping("/{id}/estado")
