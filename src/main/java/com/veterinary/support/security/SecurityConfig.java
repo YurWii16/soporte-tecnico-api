@@ -23,9 +23,20 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Permitimos acceso libre a la consola H2 y a Swagger (Documentación)
-                .requestMatchers("/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // Cualquier otra petición (como crear o editar solicitudes) requerirá token
+                // Permitimos acceso libre a la consola H2, al endpoint de errores y a Swagger
+                .requestMatchers(
+                    "/h2-console/**",
+                    "/error",                 // Permite ver los errores reales en lugar de un 403
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs",           // Ruta raíz del JSON de Swagger
+                    "/v3/api-docs/**",        // Sub-recursos de Swagger
+                    "/swagger-resources/**",
+                    "/webjars/**",
+                    "/v1/auth/**",            // Permitir login sin token
+                    "/api/v1/auth/**"         // Permitir login sin token (alternativa)
+                ).permitAll()
+                // Cualquier otra petición (como crear o editar solicitudes) requerirá token Bearer
                 .anyRequest().authenticated()
             );
         
@@ -37,4 +48,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }

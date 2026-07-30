@@ -1,95 +1,125 @@
-# API RESTful - Gestión de Solicitudes de Soporte Técnico
+# 📌 Sistema de Soporte Técnico Veterinario (Arquitectura de Microservicios)
 
-## Descripción del Proyecto
-Esta es una API RESTful desarrollada en Java con Spring Boot para la gestión de solicitudes de soporte técnico. El sistema permite a una empresa de servicios tecnológicos centralizar la información, registrando y administrando el ciclo de vida de cada solicitud de soporte desde su creación hasta su cierre, evitando la pérdida de información por el uso de registros manuales o correos desordenados.
+Este repositorio contiene la documentación unificada y las instrucciones esenciales de funcionamiento para los dos microservicios que componen el sistema:
 
-## Tecnologías Utilizadas
-El proyecto hace uso de las siguientes herramientas y dependencias:
-* **Java 17:** Lenguaje principal de desarrollo.
-* **Spring Boot (3.2.5):** Framework principal para la creación de la API REST.
-* **Spring Data JPA:** Para la capa de acceso a datos.
-* **H2 Database:** Base de datos en memoria para la persistencia temporal de los datos durante la ejecución.
-* **Bean Validation:** Para asegurar la integridad y validación de los datos de entrada (ej. `@NotNull`, `@NotBlank`).
-* **Maven:** Gestor de dependencias y construcción del proyecto.
-* **Swagger / OpenAPI:** Para la documentación interactiva de los endpoints.
+1. **`usuarios-api`** (Puerto `8083`): Microservicio encargado de la autenticación y emisión de tokens JWT.
+2. **`soporte-tecnico-api`** (Puerto `8080` / Context Path `/api`): Microservicio encargado del core del negocio (gestión de solicitudes de soporte).
 
-## Arquitectura del Sistema
-El proyecto sigue una **arquitectura por capas** para asegurar la escalabilidad y separación de responsabilidades:
-* **`controller`:** Controladores REST que exponen los endpoints y manejan las peticiones HTTP.
-* **`service`:** Capa que contiene la lógica de negocio y las validaciones principales.
-* **`repository`:** Interfaces de Spring Data JPA para la interacción con la base de datos H2.
-* **`model`:** Entidades de dominio (ej. `SolicitudSoporte`) que se mapean a la base de datos.
-* **`dto`:** Objetos de Transferencia de Datos (`RequestDTO` y `ResponseDTO`) para estructurar las entradas y salidas.
-* **`exception`:** Manejo centralizado de errores usando `@RestControllerAdvice`.
+---
 
-## Instalación y Ejecución
+## 🛠️ Arquitectura y Flujo de Autenticación
 
-### Prerrequisitos
-* Tener instalado **Java JDK 17** o superior.
-* Tener instalado **Maven**.
+El sistema implementa una **arquitectura desacoplada sin estado (Stateless)** basada en **JWT (JSON Web Tokens)** con clave compartida simétrica:
 
-### Pasos para ejecutar localmente
-1. Clonar el repositorio en tu máquina local:
-   ```bash
-   git clone https://github.com/casiano-reyes/soporte-tecnico-api.git
-Navegar al directorio del proyecto:
-Ejecutar la aplicación utilizando Maven:
-Una vez que la aplicación compile e inicie, el servidor local estará corriendo en el puerto 8080.
-🌐 Endpoints Principales
-La URL base de la API es: http://localhost:8080/api/v1/solicitudes-soporte
-Método
-Ruta
-Descripción
-GET
-/
-Lista todas las solicitudes de soporte registradas.
-POST
-/
-Registra una nueva solicitud de soporte técnico.
-GET
-/{id}
-Busca y devuelve los detalles de una solicitud específica por su ID.
-PUT
-/{id}
-Actualiza la información completa de una solicitud existente.
-PATCH
-/{id}/estado?estado=EN_PROCESO
-Modifica únicamente el estado de la solicitud.
-DELETE
-/{id}
-Elimina una solicitud del sistema.
-📚 Documentación Interactiva (Swagger)
-Para explorar y probar la API de forma interactiva a través de una interfaz gráfica, una vez que el proyecto esté corriendo, abre tu navegador y ve: 👉 http://localhost:8080/api/swagger-ui/index.html
+```
+  [ Cliente ] --(1) POST /api/v1/auth/login --> [ usuarios-api (8083) ]
+       |                                                 |
+       |<------------(2) Retorna JWT Token --------------|
+       |
+  [ Cliente ] --(3) GET /api/v1/solicitudes (Bearer JWT) -> [ soporte-tecnico-api (8080) ]
+                                                                 |
+                                                     (Valida firma localmente)
+                                                                 |
+                                                    <--- (4) Retorna datos ---
+```
 
-## 🔒 Actualizaciones de Arquitectura (Seguridad, Paginación y Microservicios)
+- **Firma Secreta Compartida**: Ambos microservicios usan exactamente la misma firma en su clase `JwtUtil`:
+  `EstaEsUnaClaveSuperSecretaParaZegel2026Backend`
+- **Validez del Token**: 1 hora.
 
-En las últimas fases se han implementado mejoras arquitectónicas clave para la robustez, seguridad y rendimiento del sistema:
+---
 
-### 1. Persistencia de Datos con MySQL/MariaDB
-Se migró la base de datos de H2 (en memoria) a **MySQL/MariaDB** local. 
-- Base de datos principal de soporte: `soportedb`
-- Base de datos de usuarios: `usuariosdb`
-- Mapeo automático de esquemas a través de **Hibernate/JPA** con soporte del dialecto de MariaDB.
+## 💾 Configuración de Base de Datos (MySQL)
 
-### 2. Estandarización y Paginación de Endpoints
-Se modificó el listado principal de solicitudes para no comprometer el rendimiento con consultas masivas:
-- **Paginación (`PageResponse`):** El listado ahora acepta los parámetros opcionales `page` (por defecto 0) y `size` (por defecto 10).
-- **Estructura Estándar de Respuesta (`ResponseDTO`):** Todas las respuestas devuelven un formato JSON uniforme con `responseCode`, `responseMessage` y el objeto `data`.
+Ambos microservicios utilizan MySQL local (puerto `3306`) siguiendo el patrón de **base de datos por servicio**:
 
-Ejemplo de endpoint paginado:
-`GET http://localhost:8080/api/v1/solicitudes-soporte?page=0&size=5`
+* **usuarios-api**: base de datos `usuariosdb`
+* **soporte-tecnico-api**: base de datos `soportedb`
 
-### 3. Microservicio de Usuarios (`usuarios-api`)
-Se creó un nuevo microservicio dedicado a la autenticación en el puerto **`8083`**:
-- Endpoint de Autenticación: `POST http://localhost:8083/api/v1/auth/login?username=...&password=...`
-- Credenciales estáticas de prototipado rápido:
-  - `admin` / `1234` (Rol: **`ADMIN`**)
-  - `tecnico` / `1234` (Rol: **`TECNICO`**)
-- Retorna un token **JWT** firmado con una clave simétrica secreta compartida válida por 1 hora.
+### Requisitos:
+1. Asegúrate de tener instalado MySQL y corriendo en el puerto 3306.
+2. Crea las bases de datos vacías en tu motor MySQL:
+   ```sql
+   CREATE DATABASE usuariosdb;
+   CREATE DATABASE soportedb;
+   ```
+3. El usuario por defecto configurado es `root` con contraseña `12345`. (Modificable en el archivo `application.properties` de cada proyecto si es necesario).
+4. Las tablas se autogeneran al iniciar los proyectos gracias a Hibernate (`spring.jpa.hibernate.ddl-auto=update` / `create-drop`).
 
-### 4. Seguridad de la API (`soporte-tecnico-api`)
-Se integró **Spring Security** en el microservicio de soporte técnico para validar los tokens JWT entrantes:
-- **JwtFilter:** Intercepta todas las peticiones protegidas y valida la firma y vigencia de la cabecera `Authorization: Bearer <token>`.
-- **Rutas Públicas:** Swagger UI (`/swagger-ui/**`, `/v3/api-docs/**`) y la consola H2 (`/h2-console/**`).
-- **Rutas Protegidas:** Todo el resto de la API requiere autenticación.
-- **Autorización por Rol (`@PreAuthorize`):** El endpoint de eliminación de solicitudes (`DELETE /v1/solicitudes-soporte/{id}`) está estrictamente restringido a usuarios con rol **`ADMIN`**.
+---
+
+## 🚀 Instrucciones de Inicio y Ejecución
+
+### Prerrequisitos:
+- JDK 17 o superior instalado.
+- Maven o `mvnw` (incluido en las carpetas de los proyectos).
+
+### Ejecutar los microservicios:
+
+#### 1. Iniciar Microservicio de Usuarios (`usuarios-api`):
+Navega a la carpeta del proyecto y ejecuta:
+```bash
+# En Linux/macOS
+./mvnw spring-boot:run
+
+# En Windows
+mvnw.cmd spring-boot:run
+```
+*El servicio levantará en:* `http://localhost:8083`
+
+#### 2. Iniciar Microservicio de Soporte (`soporte-tecnico-api`):
+Navega a la carpeta del proyecto y ejecuta:
+```bash
+# En Linux/macOS
+mvn spring-boot:run
+
+# En Windows
+run.cmd
+```
+*El servicio levantará en:* `http://localhost:8080/api`
+
+---
+
+## 🔑 Credenciales de Prueba (Prototipado Rápido)
+
+Para iniciar sesión y obtener el token JWT, realiza una petición `POST` al endpoint de `usuarios-api`:
+- **URL**: `POST http://localhost:8083/api/v1/auth/login`
+- **Parámetros** (Query o Form URL Encoded): `username` y `password`.
+
+### Cuentas disponibles:
+| Usuario | Contraseña | Rol / Permisos |
+| :--- | :--- | :--- |
+| **`admin`** | `1234` | **ADMIN** (Acceso completo, incluyendo eliminación de solicitudes) |
+| **`tecnico`** | `1234` | **TECNICO** (Acceso de lectura y actualización, no puede eliminar) |
+
+*Respuesta esperada:*
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+---
+
+## 🌐 Endpoints y Documentación Interactiva (Swagger UI)
+
+Una vez iniciados los servicios, puedes consultar y probar los endpoints directamente desde tu navegador:
+
+### 📄 soporte-tecnico-api (Puerto 8080 con Context Path `/api`)
+* **Swagger UI (Pruebas Interactivas)**: 👉 [http://localhost:8080/api/swagger-ui/index.html](http://localhost:8080/api/swagger-ui/index.html)
+* **OpenAPI Docs (JSON)**: `http://localhost:8080/api/v3/api-docs`
+
+#### Endpoints Principales:
+* **Listado Paginado**: `GET /api/v1/solicitudes-soporte?page=0&size=10` (Público)
+* **Crear Solicitud**: `POST /api/v1/solicitudes-soporte` (Requiere Token Bearer)
+* **Obtener por ID**: `GET /api/v1/solicitudes-soporte/{id}` (Requiere Token Bearer)
+* **Actualizar Completa**: `PUT /api/v1/solicitudes-soporte/{id}` (Requiere Token Bearer)
+* **Actualizar Estado**: `PATCH /api/v1/solicitudes-soporte/{id}/estado?estado=EN_PROCESO` (Requiere Token Bearer)
+* **Eliminar Solicitud**: `DELETE /api/v1/solicitudes-soporte/{id}` (Requiere Token Bearer con rol **ADMIN**)
+
+---
+
+### 📄 usuarios-api (Puerto 8083)
+* **Login**: `POST /api/v1/auth/login` (Público)
+* **Swagger UI (Si se habilita dependencia)**: 👉 [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
+* **OpenAPI Docs (JSON)**: `http://localhost:8083/v3/api-docs`
