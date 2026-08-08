@@ -75,9 +75,9 @@ public class SolicitudSoporteController {
     @PreAuthorize("hasRole('ADMIN')") // ¡Esta es la magia! Solo el rol ADMIN entra aquí
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar solicitud")
-    public ResponseEntity<ResponseDTO<Void>> eliminarSolicitud(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarSolicitud(@PathVariable Long id) {
         service.eliminar(id);
-        return ResponseEntity.ok(new ResponseDTO<>(200, "Solicitud eliminada correctamente"));
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/estado")

@@ -31,33 +31,43 @@ El sistema implementa una **arquitectura desacoplada sin estado (Stateless)** ba
 
 ## 💾 Configuración de Base de Datos (MySQL)
 
-Ambos microservicios utilizan MySQL local (puerto `3306`) siguiendo el patrón de **base de datos por servicio**:
-
+Ambos microservicios utilizan MySQL/MariaDB en el puerto `3306` siguiendo el patrón de **base de datos por servicio**:
 * **usuarios-api**: base de datos `usuariosdb`
 * **soporte-tecnico-api**: base de datos `soportedb`
 
-### Requisitos:
-1. Asegúrate de tener instalado MySQL y corriendo en el puerto 3306.
-2. Crea las bases de datos vacías en tu motor MySQL:
+### Opción A: Levantar Base de Datos con Docker (Recomendada 🐳)
+Si tienes **Docker** y **Docker Compose** instalados, puedes iniciar la base de datos y crear las estructuras necesarias automáticamente con un solo comando en la raíz del proyecto:
+```bash
+docker compose up -d
+```
+*Esto iniciará un contenedor MySQL en el puerto 3306, configurará la contraseña en `12345` y ejecutará el script `db-init/init.sql` para crear de forma automática las bases de datos `usuariosdb` y `soportedb`.*
+
+### Opción B: Instalación Local Tradicional
+Si prefieres usar un motor MySQL instalado localmente en tu sistema operativo:
+1. Asegúrate de tener el servicio MySQL corriendo en el puerto `3306`.
+2. Crea manualmente las bases de datos vacías en tu motor SQL:
    ```sql
    CREATE DATABASE usuariosdb;
    CREATE DATABASE soportedb;
    ```
-3. El usuario por defecto configurado es `root` con contraseña `12345`. (Modificable en el archivo `application.properties` de cada proyecto si es necesario).
-4. Las tablas se autogeneran al iniciar los proyectos gracias a Hibernate (`spring.jpa.hibernate.ddl-auto=update` / `create-drop`).
+3. El usuario por defecto configurado es `root` con contraseña `12345` (puedes modificar estas credenciales en los archivos `application.properties` de cada proyecto si tienes una contraseña distinta).
+
+> [!NOTE]
+> Las tablas de las bases de datos se autogeneran automáticamente al iniciar los proyectos gracias a la configuración de Hibernate.
 
 ---
 
 ## 🚀 Instrucciones de Inicio y Ejecución
 
 ### Prerrequisitos:
-- JDK 17 o superior instalado.
-- Maven o `mvnw` (incluido en las carpetas de los proyectos).
+- **Java JDK 17** o superior instalado.
+- **Docker** y **Docker Compose** (si usas la Opción A para la base de datos).
+- *(Opcional)* Maven instalado globalmente (no es necesario, ya que ambos proyectos incluyen su propio compilador embebido `mvnw`).
 
 ### Ejecutar los microservicios:
 
 #### 1. Iniciar Microservicio de Usuarios (`usuarios-api`):
-Navega a la carpeta del proyecto y ejecuta:
+Navega a la carpeta `usuarios-api` y ejecuta:
 ```bash
 # En Linux/macOS
 ./mvnw spring-boot:run
@@ -68,15 +78,25 @@ mvnw.cmd spring-boot:run
 *El servicio levantará en:* `http://localhost:8083`
 
 #### 2. Iniciar Microservicio de Soporte (`soporte-tecnico-api`):
-Navega a la carpeta del proyecto y ejecuta:
+Navega a la carpeta `soporte-tecnico-api` y ejecuta:
 ```bash
 # En Linux/macOS
-mvn spring-boot:run
+./mvnw spring-boot:run
 
 # En Windows
-run.cmd
+mvnw.cmd spring-boot:run
 ```
 *El servicio levantará en:* `http://localhost:8080/api`
+
+---
+
+## 🧪 Pruebas Rápidas con Postman
+
+Hemos preparado una colección de Postman pre-configurada para facilitar las pruebas de desarrollo:
+
+1. Importa el archivo **`Soporte_Tecnico_Veterinario.postman_collection.json`** (ubicado en la raíz de este repositorio) a tu aplicación Postman.
+2. Abre la carpeta `1. Autenticación` y ejecuta la petición **`Login Administrador (ADMIN)`**. Esto obtendrá el JWT y guardará automáticamente el token en una variable global llamada `{{jwt_token}}`.
+3. Ya puedes ejecutar libremente cualquiera de las peticiones en la carpeta `2. Solicitudes de Soporte` (Crear, Listar, Actualizar, Consultar por ID, Cambiar Estado, Eliminar o provocar una Validación Incorrecta).
 
 ---
 

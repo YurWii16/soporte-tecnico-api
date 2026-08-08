@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:8.0
+    container_name: soporte-veterinario-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "12345"
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
