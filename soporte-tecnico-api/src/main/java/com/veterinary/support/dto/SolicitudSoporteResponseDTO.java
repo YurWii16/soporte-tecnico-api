@@ -17,6 +17,8 @@ public class SolicitudSoporteResponseDTO {
     private String solicitante;
     private EstadoSolicitud estado;
     private PrioridadSolicitud prioridad;
+    private String creadoPorUsername;
+    private String tecnicoAsignadoUsername;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
 
@@ -29,6 +31,8 @@ public class SolicitudSoporteResponseDTO {
         dto.setSolicitante(entity.getSolicitante());
         dto.setEstado(entity.getEstado());
         dto.setPrioridad(entity.getPrioridad());
+        dto.setCreadoPorUsername(entity.getCreadoPorUsername());
+        dto.setTecnicoAsignadoUsername(entity.getTecnicoAsignadoUsername());
         dto.setFechaCreacion(entity.getFechaCreacion());
         dto.setFechaActualizacion(entity.getFechaActualizacion());
         return dto;

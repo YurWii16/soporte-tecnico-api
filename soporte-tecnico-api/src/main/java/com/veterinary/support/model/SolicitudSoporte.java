@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "solicitudes_soporte") // Nombre de la tabla en MySQL
+@Table(name = "solicitudes_soporte")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class SolicitudSoporte {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autoincrementable
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 200)
@@ -32,7 +32,7 @@ public class SolicitudSoporte {
     @Column(nullable = false)
     private String solicitante;
 
-    @Enumerated(EnumType.STRING) // Guarda el nombre del enum como texto
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private EstadoSolicitud estado = EstadoSolicitud.PENDIENTE;
@@ -42,13 +42,18 @@ public class SolicitudSoporte {
     @Builder.Default
     private PrioridadSolicitud prioridad = PrioridadSolicitud.MEDIA;
 
+    @Column(name = "creado_por_username")
+    private String creadoPorUsername;
+
+    @Column(name = "tecnico_asignado_username")
+    private String tecnicoAsignadoUsername;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    // Estos métodos generan la fecha automáticamente al crear o actualizar el registro
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();

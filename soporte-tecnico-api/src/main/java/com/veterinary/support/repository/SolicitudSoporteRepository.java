@@ -19,4 +19,6 @@ public interface SolicitudSoporteRepository extends JpaRepository<SolicitudSopor
 
     @Query("SELECT s.estado AS estado, COUNT(s) AS cantidad FROM SolicitudSoporte s GROUP BY s.estado")
     List<Object[]> countByEstado();
+    List<SolicitudSoporte> findByCreadoPorUsername(String creadoPorUsername);
+    List<SolicitudSoporte> findByTecnicoAsignadoUsername(String tecnicoAsignadoUsername);
 }

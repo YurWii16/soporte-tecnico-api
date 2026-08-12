@@ -49,4 +49,4 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
         return ResponseEntity.badRequest().body(body);
     }
-}
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class) public ResponseEntity<Map<String, Object>> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) { Map<String, Object> body = new HashMap<>(); body.put("timestamp", LocalDateTime.now().toString()); body.put("status", HttpStatus.FORBIDDEN.value()); body.put("error", "Acceso denegado"); body.put("message", ex.getMessage()); return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body); }}

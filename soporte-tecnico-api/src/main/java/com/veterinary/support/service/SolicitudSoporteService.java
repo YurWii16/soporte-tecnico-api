@@ -11,6 +11,9 @@ import com.veterinary.support.model.SolicitudSoporte;
 import com.veterinary.support.model.SolicitudSoporte.EstadoSolicitud;
 import com.veterinary.support.repository.SolicitudSoporteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,16 @@ public class SolicitudSoporteService {
 
     private final SolicitudSoporteRepository repository;
 
+    private String currentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private boolean currentUserHasRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+    }
+
     public List<SolicitudSoporteResponseDTO> obtenerTodas() {
         return repository.findAll().stream()
                 .map(SolicitudSoporteResponseDTO::fromEntity)
@@ -33,13 +46,8 @@ public class SolicitudSoporteService {
     }
 
     public PageResponse<SolicitudSoporte> listarSolicitudesPaginadas(int numeroPagina, int tamañoPagina) {
-        // 1. Creamos la regla de paginación
         Pageable pageable = PageRequest.of(numeroPagina, tamañoPagina);
-        
-        // 2. JPA hace la consulta a MySQL con límite de datos automáticamente
         Page<SolicitudSoporte> pagina = repository.findAll(pageable);
-        
-        // 3. Empaquetamos el resultado en nuestro DTO como enseñó el profesor
         return new PageResponse<>(
                 pagina.getContent(),
                 pagina.getNumber(),
@@ -53,7 +61,40 @@ public class SolicitudSoporteService {
     public SolicitudSoporteResponseDTO obtenerPorId(Long id) {
         SolicitudSoporte solicitud = repository.findById(id)
                 .orElseThrow(() -> new SolicitudSoporteNotFoundException(id));
-        return SolicitudSoporteResponseDTO.fromEntity(solicitud);
+
+        if (currentUserHasRole("ADMIN")) {
+            return SolicitudSoporteResponseDTO.fromEntity(solicitud);
+        }
+        if (currentUserHasRole("CLIENTE")) {
+            if (!currentUsername().equals(solicitud.getCreadoPorUsername())) {
+                throw new AccessDeniedException("No puedes consultar solicitudes de otro cliente");
+            }
+            return SolicitudSoporteResponseDTO.fromEntity(solicitud);
+        }
+        if (currentUserHasRole("TECNICO")) {
+            // REGLA: Nadie puede ver solicitudes asignadas al Técnico Luis
+            if ("luis".equals(solicitud.getTecnicoAsignadoUsername()) && !"luis".equals(currentUsername())) {
+                throw new AccessDeniedException("No puedes ver solicitudes asignadas al Técnico Luis");
+            }
+            if (!currentUsername().equals(solicitud.getTecnicoAsignadoUsername())) {
+                throw new AccessDeniedException("Solo puedes consultar solicitudes que te fueron asignadas");
+            }
+            return SolicitudSoporteResponseDTO.fromEntity(solicitud);
+        }
+        throw new AccessDeniedException("No autorizado");
+    }
+
+
+    public List<SolicitudSoporteResponseDTO> misSolicitudes() {
+        return repository.findByCreadoPorUsername(currentUsername()).stream()
+                .map(SolicitudSoporteResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<SolicitudSoporteResponseDTO> misAsignaciones() {
+        return repository.findByTecnicoAsignadoUsername(currentUsername()).stream()
+                .map(SolicitudSoporteResponseDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -65,6 +106,7 @@ public class SolicitudSoporteService {
                 .solicitante(dto.getSolicitante())
                 .prioridad(dto.getPrioridad() != null ? dto.getPrioridad() : SolicitudSoporte.PrioridadSolicitud.MEDIA)
                 .estado(EstadoSolicitud.PENDIENTE)
+                .creadoPorUsername(currentUsername())
                 .build();
         return SolicitudSoporteResponseDTO.fromEntity(repository.save(solicitud));
     }
@@ -73,6 +115,15 @@ public class SolicitudSoporteService {
     public SolicitudSoporteResponseDTO actualizar(Long id, SolicitudSoporteRequestDTO dto) {
         SolicitudSoporte solicitud = repository.findById(id)
                 .orElseThrow(() -> new SolicitudSoporteNotFoundException(id));
+
+        if (!currentUserHasRole("ADMIN")) {
+            if (!currentUserHasRole("CLIENTE")
+                    || !currentUsername().equals(solicitud.getCreadoPorUsername())
+                    || solicitud.getEstado() != EstadoSolicitud.PENDIENTE) {
+                throw new AccessDeniedException("No puedes actualizar esta solicitud");
+            }
+        }
+
         solicitud.setTitulo(dto.getTitulo());
         solicitud.setDescripcion(dto.getDescripcion());
         solicitud.setClinica(dto.getClinica());
@@ -91,7 +142,28 @@ public class SolicitudSoporteService {
     public SolicitudSoporteResponseDTO actualizarEstado(Long id, EstadoSolicitud nuevoEstado) {
         SolicitudSoporte solicitud = repository.findById(id)
                 .orElseThrow(() -> new SolicitudSoporteNotFoundException(id));
+
+        // REGLA: Nadie puede modificar solicitudes asignadas al Técnico Luis
+        if ("luis".equals(solicitud.getTecnicoAsignadoUsername()) && !"luis".equals(currentUsername()) && !currentUserHasRole("ADMIN")) {
+            throw new AccessDeniedException("No puedes modificar solicitudes asignadas al Técnico Luis");
+        }
+
+        if (!currentUserHasRole("ADMIN")) {
+            if (!currentUserHasRole("TECNICO") || !currentUsername().equals(solicitud.getTecnicoAsignadoUsername())) {
+                throw new AccessDeniedException("Solo puedes cambiar el estado de solicitudes asignadas a ti");
+            }
+        }
+
         solicitud.setEstado(nuevoEstado);
+        return SolicitudSoporteResponseDTO.fromEntity(repository.save(solicitud));
+    }
+
+
+    @Transactional
+    public SolicitudSoporteResponseDTO asignarTecnico(Long id, String tecnicoUsername) {
+        SolicitudSoporte solicitud = repository.findById(id)
+                .orElseThrow(() -> new SolicitudSoporteNotFoundException(id));
+        solicitud.setTecnicoAsignadoUsername(tecnicoUsername);
         return SolicitudSoporteResponseDTO.fromEntity(repository.save(solicitud));
     }
 

@@ -1,10 +1,7 @@
 package com.veterinary.users.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "usuarios")
@@ -24,6 +21,7 @@ public class Usuario {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String rol; // Aquí guardaremos "ADMIN" o "TECNICO"
+    private Rol rol;
 }
