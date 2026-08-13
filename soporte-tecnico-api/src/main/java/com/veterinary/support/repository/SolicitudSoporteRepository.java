@@ -13,8 +13,6 @@ public interface SolicitudSoporteRepository extends JpaRepository<SolicitudSopor
 
     List<SolicitudSoporte> findByEstado(EstadoSolicitud estado);
 
-    List<SolicitudSoporte> findByClinicaIgnoreCase(String clinica);
-
     List<SolicitudSoporte> findByEstadoIn(List<EstadoSolicitud> estados);
 
     @Query("SELECT s.estado AS estado, COUNT(s) AS cantidad FROM SolicitudSoporte s GROUP BY s.estado")

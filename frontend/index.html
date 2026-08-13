@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte TI - Sistema de Gestión de Incidencias</title>
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos de la aplicación -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Elemento para las alertas flotantes (Toasts) -->
+    <div id="toast-container"></div>
+
+    <!-- PANTALLA DE AUTENTICACIÓN (LOGIN) -->
+    <div id="login-container" class="auth-wrapper">
+        <div class="auth-glow"></div>
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span>Soporte TI</span>
+                </div>
+                <h2>Bienvenido de nuevo</h2>
+                <p>Ingresa tus credenciales para acceder al sistema</p>
+            </div>
+            
+            <!-- Formulario de Login -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username"><i class="fa-solid fa-user"></i> Usuario</label>
+                    <input type="text" id="login-username" placeholder="Ej. admin, tecnico, cliente" required autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password"><i class="fa-solid fa-lock"></i> Contraseña</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" id="toggle-password" class="btn-icon">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    Iniciar Sesión <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </form>
+            
+            <!-- Accesos rápidos para desarrollo/pruebas -->
+            <div class="quick-access">
+                <h3>Accesos rápidos de prueba</h3>
+                <div class="quick-users">
+                    <button class="btn btn-outline quick-user-btn" data-user="admin" data-pass="1234">
+                        <span class="badge badge-admin">ADMIN</span>
+                        <span class="user-name">admin / 1234</span>
+                    </button>
+                    <button class="btn btn-outline quick-user-btn" data-user="tecnico" data-pass="1234">
+                        <span class="badge badge-tecnico">TECNICO</span>
+                        <span class="user-name">tecnico / 1234</span>
+                    </button>
+                    <button class="btn btn-outline quick-user-btn" data-user="cliente" data-pass="1234">
+                        <span class="badge badge-cliente">CLIENTE</span>
+                        <span class="user-name">cliente / 1234</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
+    <div id="app-container" class="dashboard-wrapper hidden">
+        <!-- Barra Lateral de Navegación -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span>Soporte TI</span>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar" id="profile-avatar">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div class="user-info">
+                    <h4 id="profile-name">Cargando...</h4>
+                    <span id="profile-role" class="badge">Rol</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" id="nav-tickets">
+                        <a href="#"><i class="fa-solid fa-ticket"></i> Solicitudes</a>
+                    </li>
+                    <li id="nav-users" class="admin-only hidden">
+                        <a href="#"><i class="fa-solid fa-users-gear"></i> Usuarios</a>
+                    </li>
+                    <li id="nav-metrics" class="admin-only hidden">
+                        <a href="#stats-section"><i class="fa-solid fa-chart-simple"></i> Estadísticas</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="btn btn-danger btn-block">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="welcome-message">Dashboard de Soporte</h1>
+                    <p class="text-muted" id="current-date">Hoy es...</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Botón para crear solicitudes (No disponible para Técnicos) -->
+                    <button id="btn-new-ticket" class="btn btn-success client-admin-only">
+                        <i class="fa-solid fa-plus"></i> Nueva Solicitud
+                    </button>
+                </div>
+            </header>
+
+            <!-- Sección de Tarjetas de Métricas -->
+            <section class="metrics-grid" id="metrics-container">
+                <div class="metric-card">
+                    <div class="metric-icon bg-blue-light text-blue">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Cargando...</h3>
+                        <p>Total Incidencias</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon bg-yellow-light text-yellow">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Cargando...</h3>
+                        <p>Pendientes</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon bg-purple-light text-purple">
+                        <i class="fa-solid fa-spinner"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Cargando...</h3>
+                        <p>En Proceso</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon bg-green-light text-green">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3>Cargando...</h3>
+                        <p>Resueltos</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de Control: Filtros y Búsqueda -->
+            <section class="control-panel">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="Buscar por título, oficina o ID...">
+                </div>
+                
+                <div class="filters-box">
+                    <div class="filter-group admin-only hidden">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="filter-active-only">
+                            <span class="checkbox-label"><i class="fa-solid fa-bolt"></i> Solo Activas (Servidor)</span>
+                        </label>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-status"><i class="fa-solid fa-filter"></i> Estado</label>
+                        <select id="filter-status">
+                            <option value="ALL">Todos los estados</option>
+                            <option value="PENDIENTE">Pendientes</option>
+                            <option value="EN_PROCESO">En Proceso</option>
+                            <option value="RESUELTO">Resueltos</option>
+                            <option value="CERRADO">Cerrados</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="filter-priority"><i class="fa-solid fa-circle-exclamation"></i> Prioridad</label>
+                        <select id="filter-priority">
+                            <option value="ALL">Todas las prioridades</option>
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="CRITICA">Crítica</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Listado de Solicitudes -->
+            <section class="tickets-section">
+                <div class="section-header">
+                    <h2>Listado de Atenciones</h2>
+                    <span class="tickets-count" id="tickets-count-label">0 incidencias encontradas</span>
+                </div>
+                
+                <!-- Loader -->
+                <div id="tickets-loader" class="loader-wrapper hidden">
+                    <div class="loader"></div>
+                    <p>Obteniendo solicitudes de soporte...</p>
+                </div>
+
+                <!-- Estado Vacío -->
+                <div id="tickets-empty" class="empty-state hidden">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <h3>No se encontraron solicitudes</h3>
+                    <p>No hay solicitudes de soporte técnico registradas que coincidan con los filtros seleccionados.</p>
+                </div>
+
+                <!-- Grilla de Tarjetas -->
+                <div id="tickets-grid" class="tickets-grid">
+                    <!-- Las tarjetas se inyectan dinámicamente vía JS -->
+                </div>
+
+                <!-- Paginación (Solo visible para ADMIN, ya que los endpoints de cliente y técnico no paginan) -->
+                <div id="pagination-container" class="pagination hidden">
+                    <button id="btn-page-prev" class="btn btn-outline"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                    <span id="page-indicator">Página 1 de 1</span>
+                    <button id="btn-page-next" class="btn btn-outline">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </section>
+
+            <!-- Sección de Gestión de Usuarios (ADMIN) -->
+            <section id="users-section" class="stats-section admin-only hidden">
+                <div class="section-header">
+                    <h2>Gestión de Usuarios y Personal</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="chart-card">
+                        <h3>Registrar Nuevo Colaborador / Cliente</h3>
+                        <form id="internal-register-form">
+                            <div class="form-group">
+                                <label for="internal-register-username"><i class="fa-solid fa-user-plus"></i> Nombre de Usuario</label>
+                                <input type="text" id="internal-register-username" placeholder="Ingrese nombre de usuario (ej. luis, juan)" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="internal-register-password"><i class="fa-solid fa-lock"></i> Contraseña Temporal</label>
+                                <input type="password" id="internal-register-password" placeholder="Mínimo 4 caracteres" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="internal-register-role"><i class="fa-solid fa-user-shield"></i> Asignar Rol en el Sistema</label>
+                                <select id="internal-register-role" required>
+                                    <option value="CLIENTE" selected>Cliente / Solicitante (CLIENTE)</option>
+                                    <option value="TECNICO">Técnico Operativo (TECNICO)</option>
+                                    <option value="ADMIN">Administrador (ADMIN)</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-block">
+                                <i class="fa-solid fa-user-plus"></i> Registrar Usuario
+                            </button>
+                        </form>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Usuarios Registrados en el Sistema</h3>
+                        <div style="max-height: 380px; overflow-y: auto; margin-top: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase;">
+                                        <th style="padding: 8px;">Usuario</th>
+                                        <th style="padding: 8px;">Rol</th>
+                                        <th style="padding: 8px; text-align: right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="internal-users-list-body">
+                                    <!-- Carga dinámica por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de Estadísticas Detalladas (ADMIN) -->
+            <section id="stats-section" class="stats-section admin-only hidden">
+                <div class="section-header">
+                    <h2>Análisis y Operaciones</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="chart-card">
+                        <h3>Distribución de Solicitudes por Estado</h3>
+                        <div class="chart-container">
+                            <div class="bar-chart" id="status-bar-chart">
+                                <!-- Barras inyectadas por JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Resumen del Sistema</h3>
+                        <div class="summary-details" id="system-summary-list">
+                            <!-- Detalles de carga rápida -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: CREAR / EDITAR SOLICITUD -->
+    <div id="ticket-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-ticket-title">Registrar Solicitud</h3>
+                <button type="button" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="ticket-form">
+                <input type="hidden" id="ticket-id">
+                
+                <div class="form-group">
+                    <label for="ticket-clinic">Sede / Oficina / Departamento <span class="required">*</span></label>
+                    <input type="text" id="ticket-clinic" placeholder="Indique la oficina, sede o departamento afectado" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ticket-title">Asunto de la Incidencia <span class="required">*</span></label>
+                    <input type="text" id="ticket-title" placeholder="Ej. Impresora no responde / Sin acceso a internet / Fallo de red" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ticket-desc">Descripción Detallada <span class="required">*</span></label>
+                    <textarea id="ticket-desc" rows="4" placeholder="Explique detalladamente el problema y los síntomas..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="ticket-priority">Nivel de Prioridad <span class="required">*</span></label>
+                        <select id="ticket-priority" required>
+                            <option value="BAJA">Baja (General / Consultas)</option>
+                            <option value="MEDIA" selected>Media (Operativo no bloqueante)</option>
+                            <option value="ALTA">Alta (Urgencia de atención diaria)</option>
+                            <option value="CRITICA">Crítica (Falla total del sistema)</option>
+                        </select>
+                    </div>
+                    <!-- El técnico solo lo asigna el ADMIN al crear/editar, si no, se queda vacío -->
+                    <div class="form-group col-6 admin-only hidden" id="modal-assignee-group">
+                        <label for="ticket-assignee">Asignar Técnico</label>
+                        <select id="ticket-assignee">
+                            <option value="">-- Sin asignar --</option>
+                            <option value="tecnico">Técnico General (tecnico)</option>
+                            <option value="luis">Técnico Especialista (luis)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline btn-close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" id="btn-save-ticket">Guardar Solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ASIGNAR TÉCNICO (RÁPIDO) -->
+    <div id="assign-modal" class="modal-overlay hidden">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3>Asignar Técnico de Soporte</h3>
+                <button type="button" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="assign-form">
+                <input type="hidden" id="assign-ticket-id">
+                <div class="form-group">
+                    <label for="assign-tecnico-username">Usuario del Técnico <span class="required">*</span></label>
+                    <select id="assign-tecnico-username" required>
+                        <option value="tecnico" selected>Técnico General (tecnico)</option>
+                        <option value="luis">Técnico Especialista (luis)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline btn-close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: HISTORIAL Y DETALLES DEL TICKET -->
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Historial y Auditoría del Ticket</h3>
+                <button type="button" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+                <div class="ticket-audit-info">
+                    <h4 id="history-ticket-title" style="font-size: 1.2rem; font-weight: 700; margin-bottom: 8px;">Título del ticket</h4>
+                    <p id="history-ticket-desc" class="text-muted" style="margin-top: 8px; margin-bottom: 16px; font-size: 0.95rem; line-height: 1.4;"></p>
+                    
+                    <div class="summary-details">
+                        <div class="summary-item">
+                            <span class="summary-item-label">ID de Incidencia</span>
+                            <span class="summary-item-value" id="history-ticket-id">#1</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Sede / Oficina</span>
+                            <span class="summary-item-value" id="history-ticket-clinic">Veterinaria</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Usuario Solicitante</span>
+                            <span class="summary-item-value" id="history-ticket-solicitante">Juan</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Creado por Usuario</span>
+                            <span class="summary-item-value" id="history-ticket-creator">cliente</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Técnico Asignado</span>
+                            <span class="summary-item-value" id="history-ticket-assignee">tecnico</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Estado Actual</span>
+                            <span class="summary-item-value" id="history-ticket-status">PENDIENTE</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Fecha de Registro</span>
+                            <span class="summary-item-value text-blue" id="history-ticket-created-date">12 Ago 2026, 22:00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-item-label">Última Actualización</span>
+                            <span class="summary-item-value text-green" id="history-ticket-updated-date">12 Ago 2026, 22:15</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR USUARIO -->
+    <div id="user-edit-modal" class="modal-overlay hidden">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h3>Editar Usuario</h3>
+                <button type="button" class="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="user-edit-form">
+                <div class="form-group">
+                    <label for="edit-user-username">Nombre de Usuario</label>
+                    <input type="text" id="edit-user-username" readonly style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-password">Nueva Contraseña (Opcional)</label>
+                    <input type="password" id="edit-user-password" placeholder="Dejar en blanco para mantener la actual">
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-role">Rol del Usuario <span class="required">*</span></label>
+                    <select id="edit-user-role" required>
+                        <option value="CLIENTE">Cliente / Solicitante (CLIENTE)</option>
+                        <option value="TECNICO">Técnico Operativo (TECNICO)</option>
+                        <option value="ADMIN">Administrador (ADMIN)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline btn-close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de lógica -->
+    <script src="app.js"></script>
+</body>
+</html>

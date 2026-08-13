@@ -116,15 +116,6 @@ public class SolicitudSoporteController {
             @PathVariable EstadoSolicitud estado) {
         return ResponseEntity.ok(service.obtenerPorEstado(estado));
     }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/clinica/{clinica}")
-    @Operation(summary = "Obtener solicitudes por clínica (solo ADMIN)")
-    public ResponseEntity<List<SolicitudSoporteResponseDTO>> getByClinica(
-            @PathVariable String clinica) {
-        return ResponseEntity.ok(service.obtenerPorClinica(clinica));
-    }
-
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/activas")
     @Operation(summary = "Obtener solicitudes activas (solo ADMIN)")

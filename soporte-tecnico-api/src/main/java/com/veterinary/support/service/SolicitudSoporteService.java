@@ -173,12 +173,6 @@ public class SolicitudSoporteService {
                 .collect(Collectors.toList());
     }
 
-    public List<SolicitudSoporteResponseDTO> obtenerPorClinica(String clinica) {
-        return repository.findByClinicaIgnoreCase(clinica).stream()
-                .map(SolicitudSoporteResponseDTO::fromEntity)
-                .collect(Collectors.toList());
-    }
-
     public List<SolicitudSoporteResponseDTO> obtenerActivas() {
         return repository.findByEstadoIn(
                 Arrays.asList(EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_PROCESO)

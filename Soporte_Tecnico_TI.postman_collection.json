@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "84d5df68-963d-4c3e-8ea7-59fdb23e98cc",
-    "name": "Soporte Técnico Veterinario API",
+    "name": "Soporte Técnico TI API",
     "description": "Colección de peticiones para los microservicios usuarios-api (puerto 8083) y soporte-tecnico-api (puerto 8080 con context path /api).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -101,7 +101,7 @@
                 }
               ]
             },
-            "description": "Inicia sesión como técnico técnico. Guarda el token en la variable global 'jwt_token'."
+            "description": "Inicia sesión como técnico de turno. Guarda el token en la variable global 'jwt_token'."
           },
           "response": []
         }
@@ -127,7 +127,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Falla de conexión en el visor de Rayos X\",\n  \"descripcion\": \"El software del visor no conecta con el escáner dental veterinario. Se requiere revisión física del cable de red.\",\n  \"clinica\": \"Veterinaria San José - Surco\",\n  \"solicitante\": \"Dra. Marcela Mendoza\",\n  \"prioridad\": \"CRITICA\"\n}",
+              "raw": "{\n  \"titulo\": \"Falla de conexión en la VPN corporativa\",\n  \"descripcion\": \"No permite conectar al servidor remoto de bases de datos. Muestra error de autenticación 800.\",\n  \"clinica\": \"Sede Principal - Piso 3\",\n  \"solicitante\": \"carlos_soto\",\n  \"prioridad\": \"ALTA\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -243,7 +243,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Falla de conexión en el visor de Rayos X (Actualizado)\",\n  \"descripcion\": \"Se reinstalaron los drivers de red pero sigue con intermitencia extrema.\",\n  \"clinica\": \"Veterinaria San José - Surco\",\n  \"solicitante\": \"Dra. Marcela Mendoza\",\n  \"prioridad\": \"CRITICA\"\n}",
+              "raw": "{\n  \"titulo\": \"Falla de conexión en la VPN corporativa (Actualizado)\",\n  \"descripcion\": \"Se reinstaló el cliente AnyConnect pero sigue saliendo error de credenciales.\",\n  \"clinica\": \"Sede Principal - Piso 3\",\n  \"solicitante\": \"carlos_soto\",\n  \"prioridad\": \"ALTA\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -358,7 +358,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"\",\n  \"descripcion\": \"Intento de envío de solicitud con título y clínica en blanco.\",\n  \"clinica\": \"\",\n  \"solicitante\": \"Dr. Sin Nombre\",\n  \"prioridad\": \"BAJA\"\n}",
+              "raw": "{\n  \"titulo\": \"\",\n  \"descripcion\": \"Intento de envío de solicitud con título y sede en blanco.\",\n  \"clinica\": \"\",\n  \"solicitante\": \"carlos_soto\",\n  \"prioridad\": \"BAJA\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -378,7 +378,142 @@
                 "solicitudes-soporte"
               ]
             },
-            "description": "Intenta crear un registro con campos obligatorios vacíos (como título y clínica) para forzar un error 400 Bad Request."
+            "description": "Intenta crear un registro con campos obligatorios vacíos (como título y sede) para forzar un error 400 Bad Request."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Administración de Usuarios (ADMIN)",
+      "item": [
+        {
+          "name": "Listar todos los usuarios (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/api/v1/auth/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "users"
+              ]
+            },
+            "description": "Devuelve la lista completa de usuarios registrados en el sistema."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar nuevo usuario (POST)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "maria_ruiz",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "1234",
+                  "type": "text"
+                },
+                {
+                  "key": "rol",
+                  "value": "CLIENTE",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/v1/auth/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Permite registrar un nuevo usuario con rol CLIENTE, TECNICO o ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "Editar usuario (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "password",
+                  "value": "5678",
+                  "description": "Opcional. Dejar vacío si no se cambia la clave",
+                  "type": "text"
+                },
+                {
+                  "key": "rol",
+                  "value": "TECNICO",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/v1/auth/users/maria_ruiz",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "users",
+                "maria_ruiz"
+              ]
+            },
+            "description": "Permite actualizar el rol y/o la contraseña de un usuario existente."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar usuario (DELETE)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/api/v1/auth/users/maria_ruiz",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "users",
+                "maria_ruiz"
+              ]
+            },
+            "description": "Elimina a un usuario de la base de datos."
           },
           "response": []
         }

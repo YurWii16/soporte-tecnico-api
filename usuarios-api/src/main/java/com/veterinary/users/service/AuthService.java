@@ -39,4 +39,34 @@ public class AuthService {
 
         return usuarioRepository.save(usuario);
     }
+
+    public java.util.List<Usuario> listarTodos() {
+        return usuarioRepository.findAll();
+    }
+
+    public Usuario actualizar(String username, String password, Rol rol) {
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        if (password != null && !password.trim().isEmpty()) {
+            usuario.setPassword(passwordEncoder.encode(password));
+        }
+        
+        if (rol != null) {
+            usuario.setRol(rol);
+        }
+        
+        return usuarioRepository.save(usuario);
+    }
+
+    public void eliminar(String username) {
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        if ("admin".equals(username)) {
+            throw new RuntimeException("No se puede eliminar al administrador principal");
+        }
+        
+        usuarioRepository.delete(usuario);
+    }
 }
